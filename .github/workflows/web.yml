@@ -1,4 +1,4 @@
-name: Verify and deploy web demo
+name: Verify browser demo
 on:
   push:
     branches: [main]
@@ -32,23 +32,7 @@ jobs:
           name: web-test-screenshots
           path: web-test-results/
           if-no-files-found: ignore
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
+          name: web-release
           path: web
-  deploy:
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    needs: test
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - uses: actions/configure-pages@v5
-        with:
-          enablement: true
-      - uses: actions/deploy-pages@v4
-        id: deployment

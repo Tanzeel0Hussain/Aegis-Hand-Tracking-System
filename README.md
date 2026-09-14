@@ -6,6 +6,10 @@ Detect up to two hands, estimate extended fingers, and display a body skeleton. 
 
 ## Browser demo
 
+**[Open Aegis Live](https://tanzeel0hussain.github.io/Cybersecurity-Projects/aegis/)**
+
+The demo is hosted under the existing Cybersecurity portfolio. Its canonical source is this repository's web directory; only static browser files are copied to the hosting repository after verification.
+
 The browser version is in **web/**. Start Camera downloads the pinned MediaPipe JavaScript/WASM and model assets, then requests webcam permission. Body tracking is optional and off by default.
 
 - Stop Camera, tab hiding, or leaving the page releases the camera and closes models.
