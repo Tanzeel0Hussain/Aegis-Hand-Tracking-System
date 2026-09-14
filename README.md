@@ -2,7 +2,27 @@
 
 Local webcam hand and body-pose tracking with a glowing OpenCV HUD. Built with Python and MediaPipe Tasks.
 
-Detect up to two hands, estimate extended fingers, and display a body skeleton. This is a desktop computer-vision prototype, not a browser application or a biometric identity system.
+Detect up to two hands, estimate extended fingers, and display a body skeleton. Includes a Python desktop application and a browser demo. Neither is a biometric identity system.
+
+## Browser demo
+
+The browser version is in **web/**. Start Camera downloads the pinned MediaPipe JavaScript/WASM and model assets, then requests webcam permission. Body tracking is optional and off by default.
+
+- Stop Camera, tab hiding, or leaving the page releases the camera and closes models.
+- A late camera-permission response is immediately closed if the session was cancelled.
+- Camera frames remain on the device; jsDelivr and Google receive asset requests, not camera uploads.
+- Requires HTTPS (or localhost), camera permission, WebAssembly, and a recent browser.
+- CPU inference is capped at approximately 15 processing cycles per second to limit workload. Hand/pose inference runs synchronously; actual performance depends on the device.
+- Mirror changes the preview only. Handedness labels are model estimates for the original input.
+- The same finger-count heuristic and its limitations apply to both versions.
+
+For local browser development, run the following from the repository directory and open http://localhost:8000/web/:
+
+~~~bash
+python -m http.server 8000
+~~~
+
+The web workflow tests lifecycle behavior, geometry, responsive layouts and real MediaPipe inference using Chromium's synthetic camera. This does not verify real-hand accuracy or every physical camera/browser combination.
 
 ## Features
 
