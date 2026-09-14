@@ -60,9 +60,9 @@ def safe_destroy_windows():
         pass
 
 
-def should_exit():
+def should_exit(check_window=True):
     key = cv2.waitKey(1) & 0xFF
-    return key in (ord("q"), ord("Q"), 27) or cv2.getWindowProperty(WINDOW, cv2.WND_PROP_VISIBLE) < 1
+    return key in (ord("q"), ord("Q"), 27) or (check_window and cv2.getWindowProperty(WINDOW, cv2.WND_PROP_VISIBLE) < 1)
 
 
 def draw_brackets(image, left, top, right, bottom):
@@ -146,6 +146,7 @@ def run_camera(args, hand_path, pose_path):
         smoother = StableCount(args.smooth)
         clock = VideoClock()
         failures = 0
+        displayed = False
         previous = time.monotonic()
         fps = 0
         while True:
@@ -154,7 +155,7 @@ def run_camera(args, hand_path, pose_path):
                 failures += 1
                 if failures >= args.max_read_failures:
                     raise RuntimeError("Camera stopped returning frames. Reconnect it or try a different --camera index.")
-                if should_exit():
+                if should_exit(displayed):
                     break
                 time.sleep(0.03)
                 continue
@@ -168,6 +169,7 @@ def run_camera(args, hand_path, pose_path):
             hands, body = infer(frame, hand, pose, clock.next(now))
             image = render(frame, hands, body, smoother, fps, not args.no_glow, args.swap_handedness)
             cv2.imshow(WINDOW, image)
+            displayed = True
             if should_exit():
                 break
 

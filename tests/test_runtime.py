@@ -10,6 +10,11 @@ from tracking import StableCount
 
 
 class RuntimeTests(unittest.TestCase):
+    def test_no_window_close_check_before_first_display(self):
+        with patch("runtime.cv2.waitKey",return_value=-1), patch("runtime.cv2.getWindowProperty",return_value=0) as visible:
+            self.assertFalse(runtime.should_exit(check_window=False))
+            visible.assert_not_called()
+
     def test_unavailable_camera_is_released(self):
         cap=Mock()
         cap.isOpened.return_value=False
