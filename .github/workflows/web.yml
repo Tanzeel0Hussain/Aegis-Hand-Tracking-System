@@ -2,9 +2,9 @@ name: Verify browser demo
 on:
   push:
     branches: [main]
-    paths: ['web/**', 'web-tests/**', '.github/workflows/web.yml']
+    paths: ['web/**', 'web-tests/**', '.github/workflows/web.yml', 'launcher.py', 'Start-Aegis*']
   pull_request:
-    paths: ['web/**', 'web-tests/**', '.github/workflows/web.yml']
+    paths: ['web/**', 'web-tests/**', '.github/workflows/web.yml', 'launcher.py', 'Start-Aegis*']
   workflow_dispatch:
 permissions:
   contents: read
@@ -20,9 +20,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - run: python web-tests/launcher_test.py
       - run: node --check web/app.mjs
       - run: node --check web/detectors.mjs
-      - run: node --test web-tests/tracking.test.mjs
+      - run: node --test web-tests/*.test.mjs
       - run: npm install --no-save --package-lock=false playwright@1.58.2
       - run: npx playwright install --with-deps chromium
       - run: node web-tests/browser.mjs
@@ -36,3 +37,4 @@ jobs:
         with:
           name: web-release
           path: web
+

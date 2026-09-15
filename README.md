@@ -10,7 +10,7 @@ Detect up to two hands, estimate extended fingers, and display a body skeleton. 
 
 The demo is hosted under the existing Cybersecurity portfolio. Its canonical source is this repository's web directory; only static browser files are copied to the hosting repository after verification.
 
-The browser version is in **web/**. Start Camera downloads the pinned MediaPipe JavaScript/WASM and model assets, then requests webcam permission. Body tracking is optional and off by default.
+The browser version is in **web/**. Start Camera downloads the pinned MediaPipe JavaScript/WASM and model assets, then requests webcam permission. Select Hands, Full Body, Air Drawing, or Color Portal. Mode changes restart the camera session cleanly.
 
 - Stop Camera, tab hiding, or leaving the page releases the camera and closes models.
 - A late camera-permission response is immediately closed if the session was cancelled.
@@ -20,11 +20,40 @@ The browser version is in **web/**. Start Camera downloads the pinned MediaPipe 
 - Mirror changes the preview only. Handedness labels are model estimates for the original input.
 - The same finger-count heuristic and its limitations apply to both versions.
 
-For local browser development, run the following from the repository directory and open http://localhost:8000/web/:
+### Download and run the same four modes
 
-~~~bash
-python -m http.server 8000
-~~~
+1. [Download the project ZIP](https://github.com/Tanzeel0Hussain/Aegis-Hand-Tracking-System/archive/refs/heads/main.zip) and extract it completely.
+2. Install Python 3 if it is not already installed. **No pip packages or Node.js are needed for the browser studio.**
+3. Windows: double-click **Start-Aegis.bat**. macOS/Linux: open a terminal in the extracted folder and run **python3 launcher.py**.
+4. Keep the launcher window open and allow camera permission in the browser. Stop Camera releases the webcam; Ctrl+C closes the local server.
+
+The launcher serves only `web/` on your own computer (127.0.0.1) and opens the browser automatically. Internet is required to load third-party model/JS/WASM assets; this download is **not a fully offline bundle**. If automatic opening fails, copy the printed URL into your browser. macOS users can also run `sh Start-Aegis.command`.
+
+| Mode | Controls |
+|---|---|
+| Hands | Show one or two palms for landmarks and estimated finger counts |
+| Full Body | Step back to keep head, torso, arms, and feet visible; tracks one person |
+| Air Drawing | Pinch thumb and index to draw; release to lift the pen. Ink, brush, Undo, Clear, and Save PNG controls are provided |
+| Color Portal | Show both hands; separation controls portal size, vertical position changes colors |
+
+Air drawings stay in the current page while switching modes, but disappear on reload. Save PNG exports only the drawing, matching the mirror setting, with a transparent background. It does not recognize handwriting as text. Drawing is limited to 12,000 points to bound memory. Color Portal is a stylized 2D effect; it does not measure physical depth. Reduced-motion preferences remove automatic rotation.
+
+### Browser code map
+
+| File | Responsibility |
+|---|---|
+| `web/index.html` | Accessible studio layout, mode selection, download link |
+| `web/style.css` | Responsive appearance |
+| `web/app.mjs` | Session lifecycle, UI events, mode wiring |
+| `web/detectors.mjs` | Pinned MediaPipe model loading and cleanup |
+| `web/tracking.mjs` | Finger geometry, smoothing, skeleton connections |
+| `web/render.mjs` | Confidence-gated skeleton rendering |
+| `web/modes/air-draw.mjs` | Pinch detection, strokes, undo and drawing rendering |
+| `web/modes/gesture-effects.mjs` | Two-hand color portal rendering |
+| `launcher.py` | Standard-library local server and browser launcher |
+| `web-tests/` | Geometry, drawing, effects and browser lifecycle checks |
+
+Run geometry/mode tests with `node --test web-tests/*.test.mjs`. Browser CI also downloads actual MediaPipe models and uses a synthetic camera. The Python desktop app below is a separate hand/body HUD; the new drawing and portal modes belong to the browser studio, available both online and through the download launcher.
 
 The web workflow tests lifecycle behavior, geometry, responsive layouts and real MediaPipe inference using Chromium's synthetic camera. This does not verify real-hand accuracy or every physical camera/browser combination.
 
@@ -107,7 +136,7 @@ The total is smoothed; individual hand counts are immediate and can briefly diff
 
 **No physical depth measurement is reported.** MediaPipe's normalized hand z is relative to the wrist; the wrist z value is not a camera-to-hand distance.
 
-Face landmarks are omitted from drawing only. The pose model still processes the entire image and may predict face landmarks. This does not anonymize the camera feed.
+In the Python desktop HUD, face landmarks are omitted from drawing only. The browser Full Body mode includes coarse pose face points. The pose model still processes the entire image and may predict face landmarks. This does not anonymize the camera feed.
 
 ## Privacy and models
 
@@ -153,3 +182,4 @@ CI checks Python 3.11 and 3.12 dependency installation, dependency consistency, 
 | .github/workflows/tests.yml | Linux CI and real-model smoke checks |
 
 Maintained by [Tanzeel Hussain](https://github.com/Tanzeel0Hussain).
+
