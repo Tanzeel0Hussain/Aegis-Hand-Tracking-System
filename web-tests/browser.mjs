@@ -64,32 +64,63 @@ try {
   // Exercise drawing controls and portal rendering with deterministic landmarks.
   await mkdir("web-test-results", { recursive: true });
   await page.evaluate(() => {
-    const points=Array.from({length:21},()=>({x:.4,y:.5}));
-    points[0]={x:.4,y:.8};points[9]={x:.4,y:.5};
-    points[8]={x:.4,y:.2};points[4]={x:.41,y:.2};
-    window.__hands=[points];
+    const points = Array.from({ length: 21 }, () => ({ x: 0.4, y: 0.5 }));
+    points[0] = { x: 0.4, y: 0.8 };
+    points[9] = { x: 0.4, y: 0.5 };
+    points[8] = { x: 0.4, y: 0.2 };
+    points[4] = { x: 0.41, y: 0.2 };
+    window.__hands = [points];
   });
-  await page.getByRole("button",{name:"03 · Air Drawing"}).click();
-  await page.getByText("CAMERA ON",{exact:true}).waitFor();
-  await page.getByText("Drawing · release your pinch to lift the pen.",{exact:true}).waitFor();
-  await page.evaluate(()=>{window.__hands=[];});
-  await page.getByText("Show one hand, then pinch to draw.",{exact:true}).waitFor();
-  const painted=()=>{const c=document.getElementById('overlay');return c.getContext('2d').getImageData(0,0,c.width,c.height).data.some((v,i)=>i%4===3&&v>0);};
-  assert.equal(await page.evaluate(painted),true,'Air drawing remains after hand disappears');
-  const downloadPromise=page.waitForEvent('download');
-  await page.getByRole('button',{name:'Save PNG'}).click();
-  const download=await downloadPromise;
-  assert.equal(download.suggestedFilename(),'aegis-air-drawing.png');
-  await page.getByRole('button',{name:'Undo',exact:true}).click();
-  assert.equal(await page.evaluate(painted),false,'Undo removes the stroke');
-  await page.getByRole('button',{name:'Clear',exact:true}).click();
-  await page.getByRole('button',{name:'04 · Color Portal'}).click();
-  await page.getByText('CAMERA ON',{exact:true}).waitFor();
-  await page.evaluate(()=>{window.__hands=[.25,.75].map(x=>Array.from({length:21},()=>({x,y:.5})));});
-  await page.getByText('Move hands apart to expand · move up/down to change colors.',{exact:true}).waitFor();
-  assert.equal(await page.evaluate(painted),true,'Portal renders');
-  await page.screenshot({path:'web-test-results/portal-synthetic.png',fullPage:true});
-  await page.evaluate(()=>{window.__hands=[];});
+  await page.getByRole("button", { name: "03 · Air Drawing" }).click();
+  await page.getByText("CAMERA ON", { exact: true }).waitFor();
+  await page
+    .getByText("Drawing · release your pinch to lift the pen.", { exact: true })
+    .waitFor();
+  await page.evaluate(() => {
+    window.__hands = [];
+  });
+  await page
+    .getByText("Show one hand, then pinch to draw.", { exact: true })
+    .waitFor();
+  const painted = () => {
+    const c = document.getElementById("overlay");
+    return c
+      .getContext("2d")
+      .getImageData(0, 0, c.width, c.height)
+      .data.some((v, i) => i % 4 === 3 && v > 0);
+  };
+  assert.equal(
+    await page.evaluate(painted),
+    true,
+    "Air drawing remains after hand disappears",
+  );
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Save PNG" }).click();
+  const download = await downloadPromise;
+  assert.equal(download.suggestedFilename(), "aegis-air-drawing.png");
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  assert.equal(await page.evaluate(painted), false, "Undo removes the stroke");
+  await page.getByRole("button", { name: "Clear", exact: true }).click();
+  await page.getByRole("button", { name: "04 · Color Portal" }).click();
+  await page.getByText("CAMERA ON", { exact: true }).waitFor();
+  await page.evaluate(() => {
+    window.__hands = [0.25, 0.75].map((x) =>
+      Array.from({ length: 21 }, () => ({ x, y: 0.5 })),
+    );
+  });
+  await page
+    .getByText("Move hands apart to expand · move up/down to change colors.", {
+      exact: true,
+    })
+    .waitFor();
+  assert.equal(await page.evaluate(painted), true, "Portal renders");
+  await page.screenshot({
+    path: "web-test-results/portal-synthetic.png",
+    fullPage: true,
+  });
+  await page.evaluate(() => {
+    window.__hands = [];
+  });
   // Switching an active mode releases the previous stream and restarts cleanly.
   for (const name of [
     "03 · Air Drawing",
@@ -117,6 +148,66 @@ try {
     ),
     true,
   );
+  // Real Web Audio context, synthetic hand input: mute, loss and mode cleanup.
+  await page.evaluate(() => {
+    window.__audioContexts = [];
+    const Original = window.AudioContext;
+    window.AudioContext = class extends Original {
+      constructor(...args) {
+        super(...args);
+        window.__audioContexts.push(this);
+      }
+    };
+  });
+  await page.getByRole("button", { name: "05 · Touchless Music" }).click();
+  assert.equal(
+    await page
+      .getByRole("button", { name: "Enable Sound", exact: true })
+      .isDisabled(),
+    true,
+  );
+  await page.getByRole("button", { name: "Start Camera" }).click();
+  await page.getByText("CAMERA ON", { exact: true }).waitFor();
+  assert.equal(await page.evaluate(() => window.__audioContexts.length), 0);
+  await page.getByRole("button", { name: "Enable Sound", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Sound Enabled", exact: true })
+    .waitFor();
+  await page.evaluate(() => {
+    window.__hands = [0.2, 0.8].map((x) =>
+      Array.from({ length: 21 }, () => ({ x, y: 0.5 })),
+    );
+  });
+  await page
+    .getByText(
+      "Screen-right hand: raise for higher notes · spread hands for volume.",
+      { exact: true },
+    )
+    .waitFor();
+  assert.notEqual(await page.locator("#music-note").textContent(), "—");
+  await page.evaluate(() => {
+    window.__hands = [];
+  });
+  await page
+    .getByText(
+      "Show both hands apart to play. Missing or crossed hands mute the note.",
+      { exact: true },
+    )
+    .waitFor();
+  await page.getByRole("button", { name: "Mute", exact: true }).click();
+  await page.waitForFunction(() =>
+    window.__audioContexts.every((c) => c.state === "closed"),
+  );
+  await page.getByRole("button", { name: "Enable Sound", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Sound Enabled", exact: true })
+    .waitFor();
+  await page.getByRole("button", { name: "01 · Hands" }).click();
+  await page.waitForFunction(() =>
+    window.__audioContexts.every((c) => c.state === "closed"),
+  );
+  await page.getByText("CAMERA ON", { exact: true }).waitFor();
+  await page.getByRole("button", { name: "Stop Camera" }).click();
   // Permission-denied state.
   await page.evaluate(() => {
     navigator.mediaDevices.getUserMedia = async () => {

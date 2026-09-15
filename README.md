@@ -10,7 +10,7 @@ Detect up to two hands, estimate extended fingers, and display a body skeleton. 
 
 The demo is hosted under the existing Cybersecurity portfolio. Its canonical source is this repository's web directory; only static browser files are copied to the hosting repository after verification.
 
-The browser version is in **web/**. Start Camera downloads the pinned MediaPipe JavaScript/WASM and model assets, then requests webcam permission. Select Hands, Full Body, Air Drawing, or Color Portal. Mode changes restart the camera session cleanly.
+The browser version is in **web/**. Start Camera downloads the pinned MediaPipe JavaScript/WASM and model assets, then requests webcam permission. Select Hands, Full Body, Air Drawing, Color Portal, or Touchless Music. Mode changes restart the camera session cleanly.
 
 - Stop Camera, tab hiding, or leaving the page releases the camera and closes models.
 - A late camera-permission response is immediately closed if the session was cancelled.
@@ -20,7 +20,7 @@ The browser version is in **web/**. Start Camera downloads the pinned MediaPipe 
 - Mirror changes the preview only. Handedness labels are model estimates for the original input.
 - The same finger-count heuristic and its limitations apply to both versions.
 
-### Download and run the same four modes
+### Download and run the same five modes
 
 1. [Download the project ZIP](https://github.com/Tanzeel0Hussain/Aegis-Hand-Tracking-System/archive/refs/heads/main.zip) and extract it completely.
 2. Install Python 3 if it is not already installed. **No pip packages or Node.js are needed for the browser studio.**
@@ -35,8 +35,11 @@ The launcher serves only `web/` on your own computer (127.0.0.1) and opens the b
 | Full Body | Step back to keep head, torso, arms, and feet visible; tracks one person |
 | Air Drawing | Pinch thumb and index to draw; release to lift the pen. Ink, brush, Undo, Clear, and Save PNG controls are provided |
 | Color Portal | Show both hands; separation controls portal size, vertical position changes colors |
+| Touchless Music | Start Camera → Enable Sound. Raise the screen-right hand to raise pitch; spread both hands for volume. Choose pentatonic notes or theremin glide, sine/triangle tone, and master volume |
 
 Air drawings stay in the current page while switching modes, but disappear on reload. Save PNG exports only the drawing, matching the mirror setting, with a transparent background. It does not recognize handwriting as text. Drawing is limited to 12,000 points to bound memory. Color Portal is a stylized 2D effect; it does not measure physical depth. Reduced-motion preferences remove automatic rotation.
+
+Touchless Music uses the browser Web Audio API, with no microphone or audio uploads. It starts muted and uses a single oscillator. Missing/crossed hands mute the note; Stop Camera, mode changes and tab hiding close the audio context. A 250 ms audio-clock fade prevents a held tone if tracking stalls. It needs both hands visible and is an experimental instrument, not a calibrated MIDI controller.
 
 ### Browser code map
 
@@ -50,10 +53,11 @@ Air drawings stay in the current page while switching modes, but disappear on re
 | `web/render.mjs` | Confidence-gated skeleton rendering |
 | `web/modes/air-draw.mjs` | Pinch detection, strokes, undo and drawing rendering |
 | `web/modes/gesture-effects.mjs` | Two-hand color portal rendering |
+| `web/modes/music.mjs` | Pure gesture-to-note mapping, audio lifecycle and music overlay |
 | `launcher.py` | Standard-library local server and browser launcher |
 | `web-tests/` | Geometry, drawing, effects and browser lifecycle checks |
 
-Run geometry/mode tests with `node --test web-tests/*.test.mjs`. Browser CI also downloads actual MediaPipe models and uses a synthetic camera. The Python desktop app below is a separate hand/body HUD; the new drawing and portal modes belong to the browser studio, available both online and through the download launcher.
+Run geometry/mode tests with `node --test web-tests/*.test.mjs`. Browser CI also downloads actual MediaPipe models and uses a synthetic camera. The Python desktop app below is a separate hand/body HUD; the new drawing, portal and music modes belong to the browser studio, available both online and through the download launcher.
 
 The web workflow tests lifecycle behavior, geometry, responsive layouts and real MediaPipe inference using Chromium's synthetic camera. This does not verify real-hand accuracy or every physical camera/browser combination.
 
